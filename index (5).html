@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mitarbeiter-Bewertung</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=JetBrains+Mono:wght@400;600&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ================== CONFIG ================== */
+  /* WICHTIG: APP_URL wird unten im JS gesetzt — siehe README */
+
+  /* ================== TOKENS ================== */
+  :root {
+    --bg: #f5f3ee;
+    --bg-card: #ffffff;
+    --ink: #1a1a1a;
+    --ink-soft: #4a4a4a;
+    --ink-mute: #8a8a85;
+    --line: #d9d4c7;
+    --line-soft: #e9e4d6;
+    --accent: #1a3a2e;        /* dunkles Tannengrün */
+    --accent-soft: #d4e3d8;
+    --ok: #2d7a4f;
+    --ok-soft: #dff0e4;
+    --nok: #b53636;
+    --nok-soft: #f5dada;
+    --warn: #b8341c;
+    --warn-bg: #ffe9d6;
+    --shadow: 0 1px 0 rgba(26,26,26,0.04), 0 8px 24px rgba(26,26,26,0.06);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter Tight', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(circle at 0% 0%, rgba(26,58,46,0.04), transparent 40%),
+      radial-gradient(circle at 100% 100%, rgba(184,52,28,0.03), transparent 40%);
+  }
+
+  /* ================== LAYOUT ================== */
+  .app {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 32px 28px 80px;
+  }
+
+  header.top {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 32px;
+  }
+  header.top h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 800;
+    font-size: clamp(28px, 4vw, 44px);
+    margin: 0;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  header.top h1 em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--accent);
+  }
+  header.top .sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* ================== DROPDOWN ================== */
+  .picker-wrap {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+  .picker {
+    position: relative;
+    min-width: 320px;
+  }
+  .picker-btn {
+    width: 100%;
+    background: var(--bg-card);
+    border: 1.5px solid var(--ink);
+    border-radius: 0;
+    padding: 14px 48px 14px 18px;
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 4px 4px 0 var(--ink);
+    position: relative;
+  }
+  .picker-btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--ink); }
+  .picker-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
+  .picker-btn::after {
+    content: '▾';
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: var(--accent);
+  }
+  .picker-btn.has-warn { color: var(--warn); }
+
+  .picker-list {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: var(--bg-card);
+    border: 1.5px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--ink);
+    z-index: 50;
+    max-height: 380px;
+    overflow-y: auto;
+    display: none;
+  }
+  .picker.open .picker-list { display: block; }
+  .picker-item {
+    padding: 14px 18px;
+    cursor: pointer;
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid var(--line-soft);
+    transition: background 0.1s ease;
+  }
+  .picker-item:last-child { border-bottom: none; }
+  .picker-item:hover { background: var(--accent-soft); }
+  .picker-item .warn-pill {
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    background: var(--warn);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+  .picker-search {
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid var(--line);
+    padding: 12px 18px;
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 14px;
+    background: var(--bg);
+    outline: none;
+  }
+
+  .refresh-btn {
+    background: transparent;
+    border: 1px solid var(--ink);
+    padding: 10px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .refresh-btn:hover { background: var(--ink); color: var(--bg); }
+
+  /* ================== GRID ================== */
+  .grid {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 28px;
+  }
+  @media (max-width: 940px) { .grid { grid-template-columns: 1fr; } }
+
+  /* ================== CARDS ================== */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    padding: 24px;
+    box-shadow: var(--shadow);
+  }
+  .card h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 22px;
+    margin: 0 0 4px 0;
+    letter-spacing: -0.01em;
+  }
+  .card h2 em { font-style: italic; color: var(--accent); font-weight: 400; }
+  .card .card-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 18px;
+  }
+
+  /* ================== BEWERTUNG FORM ================== */
+  .selected-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 18px;
+    padding-bottom: 18px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .selected-name {
+    font-family: 'Fraunces', serif;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .verw-btn {
+    background: var(--warn);
+    color: white;
+    border: none;
+    padding: 10px 22px;
+    font-family: 'Inter Tight', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.15s, opacity 0.15s;
+  }
+  .verw-btn:hover { transform: scale(1.04); }
+  .verw-btn.active {
+    background: var(--ink);
+    box-shadow: 0 0 0 3px var(--warn-bg);
+  }
+  .verw-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .item-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 14px;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .item-row:last-child { border-bottom: none; }
+  @media (max-width: 640px) {
+    .item-row { grid-template-columns: 1fr; }
+    .item-row .buttons { justify-self: start; }
+  }
+  .item-label {
+    font-family: 'Fraunces', serif;
+    font-size: 16px;
+    font-weight: 500;
+  }
+  .buttons {
+    display: flex;
+    gap: 10px;
+  }
+  .ok-btn, .nok-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1.5px solid transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    transition: transform 0.15s, box-shadow 0.15s;
+    background: var(--bg);
+  }
+  .ok-btn { color: var(--ok); border-color: var(--ok-soft); }
+  .nok-btn { color: var(--nok); border-color: var(--nok-soft); }
+  .ok-btn:hover { background: var(--ok-soft); transform: scale(1.1); }
+  .nok-btn:hover { background: var(--nok-soft); transform: scale(1.1); }
+  .ok-btn.selected { background: var(--ok); color: white; border-color: var(--ok); }
+  .nok-btn.selected { background: var(--nok); color: white; border-color: var(--nok); }
+
+  .item-note {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    padding: 10px 12px;
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 14px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .item-note:focus { border-color: var(--ink); background: white; }
+  .item-note::placeholder { color: var(--ink-mute); font-style: italic; }
+
+  .submit-row {
+    margin-top: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .submit-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 14px 32px;
+    font-family: 'Inter Tight', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    transition: transform 0.15s, opacity 0.2s;
+  }
+  .submit-btn:hover { transform: translateY(-2px); }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .submit-msg {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .submit-msg.ok { color: var(--ok); }
+  .submit-msg.err { color: var(--nok); }
+
+  /* ================== STATS ================== */
+  .overall {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .overall .metric {
+    background: var(--bg);
+    border: 1px solid var(--line-soft);
+    padding: 14px;
+    text-align: center;
+  }
+  .overall .metric .num {
+    font-family: 'Fraunces', serif;
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .overall .metric .num.ok { color: var(--ok); }
+  .overall .metric .num.nok { color: var(--nok); }
+  .overall .metric .lbl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-mute);
+    margin-top: 6px;
+  }
+
+  .stat-row {
+    display: grid;
+    grid-template-columns: 1fr 60px 50px 50px;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line-soft);
+    font-size: 14px;
+  }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-row .lbl {
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+  }
+  .stat-row .bar {
+    height: 8px;
+    background: var(--line-soft);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  .stat-row .bar > span {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    border-radius: 4px;
+    transition: width 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .stat-row .ok-c { color: var(--ok); font-family: 'JetBrains Mono', monospace; font-size: 13px; text-align: right; }
+  .stat-row .nok-c { color: var(--nok); font-family: 'JetBrains Mono', monospace; font-size: 13px; text-align: right; }
+
+  /* ================== RECENT ================== */
+  .recent {
+    margin-top: 28px;
+  }
+  .recent h3 {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 18px;
+    color: var(--accent);
+    margin: 0 0 12px 0;
+  }
+  .recent-item {
+    border-left: 2px solid var(--accent);
+    padding: 8px 0 8px 14px;
+    margin-bottom: 12px;
+    background: var(--bg);
+  }
+  .recent-item .when {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-mute);
+  }
+  .recent-item .who {
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    font-weight: 600;
+    margin: 2px 0 4px;
+  }
+  .recent-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .recent-tags .tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-family: 'Inter Tight', sans-serif;
+  }
+  .tag.ok { background: var(--ok-soft); color: var(--ok); }
+  .tag.nok { background: var(--nok-soft); color: var(--nok); }
+
+  /* ================== EMPTY / LOADING ================== */
+  .empty {
+    text-align: center;
+    padding: 50px 20px;
+    color: var(--ink-mute);
+  }
+  .empty .emoji { font-size: 36px; margin-bottom: 8px; }
+  .empty p {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 16px;
+    margin: 4px 0;
+  }
+  .loading {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid var(--line);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ================== CONFIG-WARN ================== */
+  .config-warn {
+    background: var(--warn-bg);
+    border: 1.5px solid var(--warn);
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+  .config-warn strong { color: var(--warn); }
+  .config-warn code {
+    background: var(--bg-card);
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: var(--ink);
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <h1>Mitarbeiter <em>Bewertung</em></h1>
+    <div class="sub" id="status">Bereit</div>
+  </header>
+
+  <div class="config-warn" id="configWarn" style="display:none;">
+    <strong>⚠ Konfiguration fehlt:</strong> Bitte öffne <code>index.html</code> und setze <code>APP_URL</code> ganz unten im <code>&lt;script&gt;</code>-Block auf deine Apps-Script-Web-App-URL.
+  </div>
+
+  <div class="picker-wrap">
+    <div class="picker" id="picker">
+      <button class="picker-btn" id="pickerBtn" type="button">Mitarbeiter auswählen</button>
+      <div class="picker-list" id="pickerList">
+        <input class="picker-search" id="pickerSearch" placeholder="Suchen…" />
+        <div id="pickerItems"></div>
+      </div>
+    </div>
+    <button class="refresh-btn" id="refreshBtn" type="button">↻ Neu laden</button>
+  </div>
+
+  <div class="grid">
+
+    <!-- BEWERTUNG -->
+    <section class="card" id="bewertungCard">
+      <h2>Neue <em>Bewertung</em></h2>
+      <div class="card-sub">Status pro Kategorie auswählen</div>
+
+      <div id="bewertungBody">
+        <div class="empty">
+          <div class="emoji">←</div>
+          <p>Wähle zuerst einen Mitarbeiter aus.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATS -->
+    <section class="card" id="statsCard">
+      <h2>Übersicht & <em>Statistik</em></h2>
+      <div class="card-sub" id="statsSub">Alle Mitarbeiter</div>
+
+      <div id="statsBody">
+        <div class="empty"><span class="loading"></span>Lade Statistik…</div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════════
+//  KONFIGURATION  —  HIER DEINE APPS-SCRIPT-URL EINTRAGEN
+// ════════════════════════════════════════════════════════════════════
+const APP_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
+// ════════════════════════════════════════════════════════════════════
+
+const CATEGORIES = [
+  { key: 'tshirt',              label: 'T-Shirt' },
+  { key: 'hose',                label: 'Hose' },
+  { key: 'jacke',               label: 'Jacke' },
+  { key: 'sauberkeitBusInnen',  label: 'Sauberkeit Bus Innen' },
+  { key: 'sauberkeitBusAussen', label: 'Sauberkeit Bus Aussen' },
+  { key: 'sauberkeitInfra',     label: 'Sauberkeit Infra' },
+  { key: 'headset',             label: 'Headset' },
+  { key: 'andereAnmerkungen',   label: 'Andere Anmerkungen' }
+];
+
+let mitarbeiter = [];     // [{name, verwarnung}]
+let selected = null;       // {name, verwarnung}
+let currentItems = {};     // { key: {status: true/false/null, note: ''} }
+
+// ============ STATE / UI ============
+
+function setStatus(text, isError) {
+  const el = document.getElementById('status');
+  el.textContent = text;
+  el.style.color = isError ? 'var(--nok)' : 'var(--ink-mute)';
+}
+
+function checkConfig() {
+  if (!APP_URL || APP_URL.includes('PASTE_YOUR')) {
+    document.getElementById('configWarn').style.display = 'block';
+    return false;
+  }
+  return true;
+}
+
+// ============ API ============
+
+function apiGet(action, params) {
+  return new Promise((resolve, reject) => {
+    if (!checkConfig()) { reject(new Error('APP_URL nicht gesetzt')); return; }
+    const cbName = '_cb_' + Math.random().toString(36).slice(2);
+    const timeoutId = setTimeout(() => { cleanup(); reject(new Error('Timeout')); }, 15000);
+    function cleanup() {
+      clearTimeout(timeoutId);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+    window[cbName] = function(data) { cleanup(); resolve(data); };
+    const qs = new URLSearchParams(Object.assign({ action: action, callback: cbName }, params || {}));
+    const script = document.createElement('script');
+    script.src = APP_URL + '?' + qs.toString();
+    script.onerror = function() { cleanup(); reject(new Error('Netzwerkfehler')); };
+    document.head.appendChild(script);
+  });
+}
+
+function apiPost(action, body) {
+  if (!checkConfig()) return Promise.reject(new Error('APP_URL nicht gesetzt'));
+  // text/plain vermeidet CORS-Preflight bei Apps Script
+  return fetch(APP_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(Object.assign({ action: action }, body))
+  }).then(r => r.json());
+}
+
+// ============ MITARBEITER LISTE ============
+
+async function loadMitarbeiter() {
+  setStatus('Lade Mitarbeiter…');
+  try {
+    const data = await apiGet('list');
+    if (!data.ok) throw new Error(data.error || 'Fehler');
+    mitarbeiter = data.mitarbeiter || [];
+    renderPicker();
+    setStatus(mitarbeiter.length + ' Mitarbeiter geladen');
+  } catch (err) {
+    setStatus('Fehler: ' + err.message, true);
+  }
+}
+
+function renderPicker(filter) {
+  const list = document.getElementById('pickerItems');
+  const q = (filter || '').toLowerCase();
+  const filtered = q ? mitarbeiter.filter(m => m.name.toLowerCase().includes(q)) : mitarbeiter;
+  list.innerHTML = '';
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="picker-item" style="color:var(--ink-mute);font-style:italic;">Niemand gefunden</div>';
+    return;
+  }
+  filtered.forEach(m => {
+    const div = document.createElement('div');
+    div.className = 'picker-item';
+    div.innerHTML = '<span>' + escapeHtml(m.name) + '</span>' +
+                    (m.verwarnung ? '<span class="warn-pill">Verwarnung</span>' : '');
+    div.addEventListener('click', () => selectMitarbeiter(m));
+    list.appendChild(div);
+  });
+}
+
+function selectMitarbeiter(m) {
+  selected = m;
+  currentItems = {};
+  CATEGORIES.forEach(c => { currentItems[c.key] = { status: null, note: '' }; });
+  document.getElementById('picker').classList.remove('open');
+  const btn = document.getElementById('pickerBtn');
+  btn.textContent = m.name;
+  btn.classList.toggle('has-warn', !!m.verwarnung);
+  renderBewertung();
+  loadStats(m.name);
+}
+
+// ============ BEWERTUNG-FORM ============
+
+function renderBewertung() {
+  const body = document.getElementById('bewertungBody');
+  if (!selected) return;
+
+  let html = '<div class="selected-head">' +
+    '<div class="selected-name">' + escapeHtml(selected.name) + '</div>' +
+    '<button class="verw-btn ' + (selected.verwarnung ? 'active' : '') + '" id="verwBtn" type="button">' +
+      (selected.verwarnung ? '✓ Verwarnung aktiv' : 'Verwarnung') +
+    '</button>' +
+  '</div>';
+
+  CATEGORIES.forEach(c => {
+    const cur = currentItems[c.key];
+    html += '<div class="item-row" data-key="' + c.key + '">' +
+      '<div class="item-label">' + escapeHtml(c.label) + '</div>' +
+      '<div class="buttons">' +
+        '<button class="ok-btn ' + (cur.status === true ? 'selected' : '') + '" data-status="ok" type="button">✓</button>' +
+        '<button class="nok-btn ' + (cur.status === false ? 'selected' : '') + '" data-status="nok" type="button">✕</button>' +
+      '</div>' +
+      '<input class="item-note" placeholder="Anmerkung Optional" value="' + escapeAttr(cur.note) + '" />' +
+    '</div>';
+  });
+
+  html += '<div class="submit-row">' +
+    '<span class="submit-msg" id="submitMsg"></span>' +
+    '<button class="submit-btn" id="submitBtn" type="button">Bewertung speichern</button>' +
+  '</div>';
+
+  body.innerHTML = html;
+
+  // Event handlers
+  body.querySelectorAll('.item-row').forEach(row => {
+    const key = row.dataset.key;
+    row.querySelectorAll('.ok-btn, .nok-btn').forEach(b => {
+      b.addEventListener('click', () => {
+        const isOk = b.dataset.status === 'ok';
+        currentItems[key].status = (currentItems[key].status === (isOk ? true : false)) ? null : (isOk ? true : false);
+        renderBewertung();
+      });
+    });
+    const note = row.querySelector('.item-note');
+    note.addEventListener('input', e => { currentItems[key].note = e.target.value; });
+  });
+
+  document.getElementById('submitBtn').addEventListener('click', submitBewertung);
+  document.getElementById('verwBtn').addEventListener('click', toggleVerwarnung);
+}
+
+async function submitBewertung() {
+  if (!selected) return;
+  const btn = document.getElementById('submitBtn');
+  const msg = document.getElementById('submitMsg');
+  btn.disabled = true;
+  msg.className = 'submit-msg';
+  msg.innerHTML = '<span class="loading"></span>Speichere…';
+  try {
+    const res = await apiPost('submit', { name: selected.name, items: currentItems });
+    if (!res.ok) throw new Error(res.error || 'Fehler');
+    msg.textContent = '✓ Gespeichert';
+    msg.className = 'submit-msg ok';
+    // Reset
+    CATEGORIES.forEach(c => { currentItems[c.key] = { status: null, note: '' }; });
+    renderBewertung();
+    // Reload stats
+    loadStats(selected.name);
+    setTimeout(() => { const m = document.getElementById('submitMsg'); if (m) m.textContent = ''; }, 3500);
+  } catch (err) {
+    msg.textContent = '✕ ' + err.message;
+    msg.className = 'submit-msg err';
+    btn.disabled = false;
+  }
+}
+
+async function toggleVerwarnung() {
+  if (!selected) return;
+  const btn = document.getElementById('verwBtn');
+  btn.disabled = true;
+  try {
+    const res = await apiPost('verwarnung', { name: selected.name, toggle: true });
+    if (!res.ok) throw new Error(res.error || 'Fehler');
+    selected.verwarnung = !!res.verwarnung;
+    // Auch in Liste updaten
+    const idx = mitarbeiter.findIndex(m => m.name === selected.name);
+    if (idx >= 0) mitarbeiter[idx].verwarnung = selected.verwarnung;
+    renderPicker();
+    renderBewertung();
+    document.getElementById('pickerBtn').classList.toggle('has-warn', selected.verwarnung);
+  } catch (err) {
+    alert('Fehler: ' + err.message);
+    btn.disabled = false;
+  }
+}
+
+// ============ STATS ============
+
+async function loadStats(name) {
+  const body = document.getElementById('statsBody');
+  const sub = document.getElementById('statsSub');
+  sub.textContent = name ? ('Detail: ' + name) : 'Alle Mitarbeiter';
+  body.innerHTML = '<div class="empty"><span class="loading"></span>Lade…</div>';
+  try {
+    const data = await apiGet('stats', name ? { name: name } : {});
+    if (!data.ok) throw new Error(data.error || 'Fehler');
+    renderStats(data);
+  } catch (err) {
+    body.innerHTML = '<div class="empty"><p>Fehler: ' + escapeHtml(err.message) + '</p></div>';
+  }
+}
+
+function renderStats(data) {
+  const body = document.getElementById('statsBody');
+  let html = '<div class="overall">' +
+    '<div class="metric"><div class="num">' + (data.totalBewertungen || 0) + '</div><div class="lbl">Bewertungen</div></div>' +
+    '<div class="metric"><div class="num ok">' + (data.totalOk || 0) + '</div><div class="lbl">OK</div></div>' +
+    '<div class="metric"><div class="num nok">' + (data.totalNok || 0) + '</div><div class="lbl">NOK</div></div>' +
+  '</div>';
+
+  if (data.overall !== null && data.overall !== undefined) {
+    html += '<div style="text-align:center;margin:10px 0 22px;font-family:Fraunces,serif;font-size:14px;color:var(--ink-soft);">' +
+      'Gesamtscore: <strong style="font-size:18px;color:var(--accent);">' + data.overall + '%</strong></div>';
+  }
+
+  (data.stats || []).forEach(s => {
+    const pct = s.score === null ? 0 : s.score;
+    html += '<div class="stat-row">' +
+      '<div class="lbl">' + escapeHtml(s.label) + '</div>' +
+      '<div class="bar"><span style="width:' + pct + '%;"></span></div>' +
+      '<div class="ok-c">' + s.ok + '</div>' +
+      '<div class="nok-c">' + s.nok + '</div>' +
+    '</div>';
+  });
+
+  if ((data.recent || []).length > 0) {
+    html += '<div class="recent"><h3>Letzte Einträge</h3>';
+    data.recent.slice(0, 8).forEach(r => {
+      const when = r.datum ? new Date(r.datum).toLocaleString('de-DE', {
+        day: '2-digit', month: '2-digit', year: '2-digit',
+        hour: '2-digit', minute: '2-digit'
+      }) : '';
+      html += '<div class="recent-item">' +
+        '<div class="when">' + escapeHtml(when) + '</div>' +
+        (data.name ? '' : '<div class="who">' + escapeHtml(r.name) + '</div>') +
+        '<div class="recent-tags">' +
+          r.items.map(i =>
+            '<span class="tag ' + (i.status === 'OK' ? 'ok' : 'nok') + '">' +
+              escapeHtml(i.label) + (i.note ? ' · ' + escapeHtml(i.note) : '') +
+            '</span>'
+          ).join('') +
+        '</div>' +
+      '</div>';
+    });
+    html += '</div>';
+  }
+
+  body.innerHTML = html;
+}
+
+// ============ UTILS ============
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function escapeAttr(s) { return escapeHtml(s); }
+
+// ============ INIT ============
+
+document.getElementById('pickerBtn').addEventListener('click', () => {
+  document.getElementById('picker').classList.toggle('open');
+  const search = document.getElementById('pickerSearch');
+  if (document.getElementById('picker').classList.contains('open')) {
+    setTimeout(() => search.focus(), 50);
+  }
+});
+document.getElementById('pickerSearch').addEventListener('input', e => renderPicker(e.target.value));
+document.addEventListener('click', e => {
+  if (!document.getElementById('picker').contains(e.target)) {
+    document.getElementById('picker').classList.remove('open');
+  }
+});
+document.getElementById('refreshBtn').addEventListener('click', () => {
+  loadMitarbeiter();
+  loadStats(selected ? selected.name : '');
+});
+
+// Start
+checkConfig();
+if (APP_URL && !APP_URL.includes('PASTE_YOUR')) {
+  loadMitarbeiter();
+  loadStats('');
+} else {
+  document.getElementById('statsBody').innerHTML =
+    '<div class="empty"><p>Bitte zuerst <code>APP_URL</code> konfigurieren.</p></div>';
+}
+</script>
+</body>
+</html>
