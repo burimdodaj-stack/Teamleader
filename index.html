@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=JetBrains+Mono:wght@400;600&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   /* ================== CONFIG ================== */
-  /* WICHTIG: APP_URL wird unten im JS gesetzt — siehe README */
+  /* WICHTIG: APP_URL_WIEN und APP_URL_ZUERICH werden unten im JS gesetzt */
 
   /* ================== TOKENS ================== */
   :root {
@@ -59,7 +59,7 @@
     gap: 16px;
     padding-bottom: 24px;
     border-bottom: 1px solid var(--line);
-    margin-bottom: 32px;
+    margin-bottom: 24px;
   }
   header.top h1 {
     font-family: 'Fraunces', serif;
@@ -80,6 +80,44 @@
     color: var(--ink-mute);
     text-transform: uppercase;
     letter-spacing: 0.1em;
+  }
+
+  /* ================== STANDORT-UMSCHALTER ================== */
+  .location-switch {
+    display: inline-flex;
+    background: var(--bg-card);
+    border: 1.5px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--ink);
+    margin-bottom: 28px;
+    overflow: hidden;
+  }
+  .location-switch button {
+    background: transparent;
+    border: none;
+    padding: 12px 28px;
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--ink-mute);
+    transition: background 0.15s, color 0.15s;
+    border-right: 1px solid var(--line);
+    position: relative;
+  }
+  .location-switch button:last-child { border-right: none; }
+  .location-switch button:hover {
+    color: var(--ink);
+    background: var(--accent-soft);
+  }
+  .location-switch button.active {
+    background: var(--accent);
+    color: white;
+  }
+  .location-switch button.active::before {
+    content: '●';
+    margin-right: 8px;
+    font-size: 10px;
+    vertical-align: middle;
   }
 
   /* ================== DROPDOWN ================== */
@@ -503,8 +541,14 @@
     <div class="sub" id="status">Bereit</div>
   </header>
 
+  <!-- STANDORT-UMSCHALTER -->
+  <div class="location-switch" role="tablist" aria-label="Standort">
+    <button type="button" data-loc="wien" class="active" role="tab">Wien</button>
+    <button type="button" data-loc="zuerich" role="tab">Zürich</button>
+  </div>
+
   <div class="config-warn" id="configWarn" style="display:none;">
-    <strong>⚠ Konfiguration fehlt:</strong> Bitte öffne <code>index.html</code> und setze <code>APP_URL</code> ganz unten im <code>&lt;script&gt;</code>-Block auf deine Apps-Script-Web-App-URL.
+    <strong>⚠ Konfiguration fehlt:</strong> Bitte öffne <code>index.html</code> und setze <code>APP_URL_WIEN</code> und <code>APP_URL_ZUERICH</code> ganz unten im <code>&lt;script&gt;</code>-Block auf deine Apps-Script-Web-App-URLs.
   </div>
 
   <div class="picker-wrap">
@@ -523,7 +567,7 @@
     <!-- BEWERTUNG -->
     <section class="card" id="bewertungCard">
       <h2>Neue <em>Bewertung</em></h2>
-      <div class="card-sub">Status pro Kategorie auswählen</div>
+      <div class="card-sub" id="bewertungSub">Status pro Kategorie auswählen</div>
 
       <div id="bewertungBody">
         <div class="empty">
@@ -548,10 +592,22 @@
 
 <script>
 // ════════════════════════════════════════════════════════════════════
-//  KONFIGURATION  —  HIER DEINE APPS-SCRIPT-URL EINTRAGEN
+//  KONFIGURATION  —  HIER DEINE APPS-SCRIPT-URLs EINTRAGEN
 // ════════════════════════════════════════════════════════════════════
-const APP_URL = "https://script.google.com/macros/s/AKfycbyZeLOVDukgc1cTyuSVCFBRfarU_4Of3deJq2RC00R_d9MUQmCabIfADyxg3B3fFHfn/exec";
+const APP_URL_WIEN    = "https://script.google.com/macros/s/AKfycbyZeLOVDukgc1cTyuSVCFBRfarU_4Of3deJq2RC00R_d9MUQmCabIfADyxg3B3fFHfn/exec";
+const APP_URL_ZUERICH = "https://script.google.com/macros/s/AKfycbwxvnJVwFKQXC-OEBNPo8CbpXfhAbPrIo5Ezh8jh0dpJMCs-fduVoGFPvLT3P3OxnAK/exec";
 // ════════════════════════════════════════════════════════════════════
+
+const LOCATIONS = {
+  wien:    { label: 'Wien',    url: APP_URL_WIEN },
+  zuerich: { label: 'Zürich',  url: APP_URL_ZUERICH }
+};
+
+// Aktiver Standort wird in localStorage gemerkt
+let currentLocation = localStorage.getItem('mb_location') || 'wien';
+if (!LOCATIONS[currentLocation]) currentLocation = 'wien';
+
+function APP_URL() { return LOCATIONS[currentLocation].url; }
 
 const CATEGORIES = [
   { key: 'tshirt',              label: 'T-Shirt' },
@@ -577,11 +633,44 @@ function setStatus(text, isError) {
 }
 
 function checkConfig() {
-  if (!APP_URL || APP_URL.includes('PASTE_YOUR')) {
+  const url = APP_URL();
+  if (!url || url.includes('PASTE_YOUR')) {
     document.getElementById('configWarn').style.display = 'block';
     return false;
   }
+  document.getElementById('configWarn').style.display = 'none';
   return true;
+}
+
+// ============ STANDORT-WECHSEL ============
+
+function switchLocation(loc) {
+  if (!LOCATIONS[loc] || loc === currentLocation) return;
+  currentLocation = loc;
+  localStorage.setItem('mb_location', loc);
+
+  // UI updaten
+  document.querySelectorAll('.location-switch button').forEach(b => {
+    b.classList.toggle('active', b.dataset.loc === loc);
+  });
+
+  // Selection und Form zurücksetzen
+  selected = null;
+  mitarbeiter = [];
+  currentItems = {};
+  document.getElementById('pickerBtn').textContent = 'Mitarbeiter auswählen';
+  document.getElementById('pickerBtn').classList.remove('has-warn');
+  document.getElementById('bewertungBody').innerHTML =
+    '<div class="empty"><div class="emoji">←</div><p>Wähle zuerst einen Mitarbeiter aus.</p></div>';
+  document.getElementById('statsSub').textContent = 'Alle Mitarbeiter — ' + LOCATIONS[loc].label;
+  document.getElementById('statsBody').innerHTML =
+    '<div class="empty"><span class="loading"></span>Lade Statistik…</div>';
+
+  // Neu laden
+  if (checkConfig()) {
+    loadMitarbeiter();
+    loadStats('');
+  }
 }
 
 // ============ API ============
@@ -591,7 +680,8 @@ function checkConfig() {
 function apiCall(action, body) {
   if (!checkConfig()) return Promise.reject(new Error('APP_URL nicht gesetzt'));
   const payload = Object.assign({ action: action }, body || {});
-  return fetch(APP_URL, {
+  const url = APP_URL();
+  return fetch(url, {
     method: 'POST',
     mode: 'cors',
     redirect: 'follow',
@@ -625,26 +715,25 @@ function apiCallJsonp(action, body) {
     });
     const qs = new URLSearchParams(flat);
     const script = document.createElement('script');
-    script.src = APP_URL + '?' + qs.toString();
+    script.src = APP_URL() + '?' + qs.toString();
     script.onerror = function() { cleanup(); reject(new Error('Netzwerkfehler')); };
     document.head.appendChild(script);
   });
 }
 
-// Kompatibilitäts-Wrapper, damit der Rest des Codes nichts ändern muss
 function apiGet(action, params)  { return apiCall(action, params); }
 function apiPost(action, body)   { return apiCall(action, body); }
 
 // ============ MITARBEITER LISTE ============
 
 async function loadMitarbeiter() {
-  setStatus('Lade Mitarbeiter…');
+  setStatus('Lade Mitarbeiter (' + LOCATIONS[currentLocation].label + ')…');
   try {
     const data = await apiGet('list');
     if (!data.ok) throw new Error(data.error || 'Fehler');
     mitarbeiter = data.mitarbeiter || [];
     renderPicker();
-    setStatus(mitarbeiter.length + ' Mitarbeiter geladen');
+    setStatus(mitarbeiter.length + ' Mitarbeiter · ' + LOCATIONS[currentLocation].label);
   } catch (err) {
     setStatus('Fehler: ' + err.message, true);
   }
@@ -688,7 +777,9 @@ function renderBewertung() {
   if (!selected) return;
 
   let html = '<div class="selected-head">' +
-    '<div class="selected-name">' + escapeHtml(selected.name) + '</div>' +
+    '<div class="selected-name">' + escapeHtml(selected.name) +
+      ' <span style="font-family:JetBrains Mono,monospace;font-size:11px;font-weight:400;color:var(--ink-mute);text-transform:uppercase;letter-spacing:0.1em;margin-left:8px;">' + escapeHtml(LOCATIONS[currentLocation].label) + '</span>' +
+    '</div>' +
     '<button class="verw-btn ' + (selected.verwarnung ? 'active' : '') + '" id="verwBtn" type="button">' +
       (selected.verwarnung ? '✓ Verwarnung aktiv' : 'Verwarnung') +
     '</button>' +
@@ -764,7 +855,6 @@ async function toggleVerwarnung() {
     const res = await apiPost('verwarnung', { name: selected.name, toggle: true });
     if (!res.ok) throw new Error(res.error || 'Fehler');
     selected.verwarnung = !!res.verwarnung;
-    // Auch in Liste updaten
     const idx = mitarbeiter.findIndex(m => m.name === selected.name);
     if (idx >= 0) mitarbeiter[idx].verwarnung = selected.verwarnung;
     renderPicker();
@@ -781,7 +871,8 @@ async function toggleVerwarnung() {
 async function loadStats(name) {
   const body = document.getElementById('statsBody');
   const sub = document.getElementById('statsSub');
-  sub.textContent = name ? ('Detail: ' + name) : 'Alle Mitarbeiter';
+  const locLabel = LOCATIONS[currentLocation].label;
+  sub.textContent = name ? ('Detail: ' + name + ' · ' + locLabel) : ('Alle Mitarbeiter · ' + locLabel);
   body.innerHTML = '<div class="empty"><span class="loading"></span>Lade…</div>';
   try {
     const data = await apiGet('stats', name ? { name: name } : {});
@@ -851,6 +942,13 @@ function escapeAttr(s) { return escapeHtml(s); }
 
 // ============ INIT ============
 
+// Standort-Buttons
+document.querySelectorAll('.location-switch button').forEach(btn => {
+  btn.addEventListener('click', () => switchLocation(btn.dataset.loc));
+  // Init aktiven State
+  btn.classList.toggle('active', btn.dataset.loc === currentLocation);
+});
+
 document.getElementById('pickerBtn').addEventListener('click', () => {
   document.getElementById('picker').classList.toggle('open');
   const search = document.getElementById('pickerSearch');
@@ -870,13 +968,12 @@ document.getElementById('refreshBtn').addEventListener('click', () => {
 });
 
 // Start
-checkConfig();
-if (APP_URL && !APP_URL.includes('PASTE_YOUR')) {
+if (checkConfig()) {
   loadMitarbeiter();
   loadStats('');
 } else {
   document.getElementById('statsBody').innerHTML =
-    '<div class="empty"><p>Bitte zuerst <code>APP_URL</code> konfigurieren.</p></div>';
+    '<div class="empty"><p>Bitte zuerst <code>APP_URL_' + currentLocation.toUpperCase() + '</code> konfigurieren.</p></div>';
 }
 </script>
 </body>
