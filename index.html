@@ -287,6 +287,64 @@
     margin-bottom: 18px;
   }
 
+  /* ================== SHEET-EMBED CARD (NEU) ================== */
+  .sheet-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .sheet-card-head .right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .sheet-link {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    text-decoration: none;
+    border: 1px solid var(--accent);
+    padding: 6px 12px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .sheet-link:hover { background: var(--accent); color: white; }
+
+  .sheet-frame-wrap {
+    position: relative;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    overflow: hidden;
+    /* Volle Höhe der Karte ausnutzen */
+    height: 720px;
+  }
+  .sheet-frame-wrap iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+  }
+  .sheet-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    color: var(--ink-mute);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .sheet-frame-wrap.loaded .sheet-loading { opacity: 0; }
+
   /* ================== BEWERTUNG FORM ================== */
   .selected-head {
     display: flex;
@@ -413,113 +471,6 @@
   .submit-msg.ok { color: var(--ok); }
   .submit-msg.err { color: var(--nok); }
 
-  /* ================== STATS ================== */
-  .overall {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-  .overall .metric {
-    background: var(--bg);
-    border: 1px solid var(--line-soft);
-    padding: 14px;
-    text-align: center;
-  }
-  .overall .metric .num {
-    font-family: 'Fraunces', serif;
-    font-size: 32px;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    line-height: 1;
-  }
-  .overall .metric .num.ok { color: var(--ok); }
-  .overall .metric .num.nok { color: var(--nok); }
-  .overall .metric .lbl {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--ink-mute);
-    margin-top: 6px;
-  }
-
-  .stat-row {
-    display: grid;
-    grid-template-columns: 1fr 60px 50px 50px;
-    gap: 10px;
-    align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--line-soft);
-    font-size: 14px;
-  }
-  .stat-row:last-child { border-bottom: none; }
-  .stat-row .lbl {
-    font-family: 'Fraunces', serif;
-    font-size: 15px;
-  }
-  .stat-row .bar {
-    height: 8px;
-    background: var(--line-soft);
-    border-radius: 4px;
-    overflow: hidden;
-    position: relative;
-  }
-  .stat-row .bar > span {
-    display: block;
-    height: 100%;
-    background: var(--accent);
-    border-radius: 4px;
-    transition: width 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-  .stat-row .ok-c { color: var(--ok); font-family: 'JetBrains Mono', monospace; font-size: 13px; text-align: right; }
-  .stat-row .nok-c { color: var(--nok); font-family: 'JetBrains Mono', monospace; font-size: 13px; text-align: right; }
-
-  /* ================== RECENT ================== */
-  .recent {
-    margin-top: 28px;
-  }
-  .recent h3 {
-    font-family: 'Fraunces', serif;
-    font-style: italic;
-    font-weight: 400;
-    font-size: 18px;
-    color: var(--accent);
-    margin: 0 0 12px 0;
-  }
-  .recent-item {
-    border-left: 2px solid var(--accent);
-    padding: 8px 0 8px 14px;
-    margin-bottom: 12px;
-    background: var(--bg);
-  }
-  .recent-item .when {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--ink-mute);
-  }
-  .recent-item .who {
-    font-family: 'Fraunces', serif;
-    font-size: 15px;
-    font-weight: 600;
-    margin: 2px 0 4px;
-  }
-  .recent-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-  .recent-tags .tag {
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-family: 'Inter Tight', sans-serif;
-  }
-  .tag.ok { background: var(--ok-soft); color: var(--ok); }
-  .tag.nok { background: var(--nok-soft); color: var(--nok); }
-
   /* ================== EMPTY / LOADING ================== */
   .empty {
     text-align: center;
@@ -592,7 +543,7 @@
     </div>
     <button class="refresh-btn" id="refreshBtn" type="button">↻ Neu laden</button>
 
-    <!-- ▶ NEU: Scrap-Button -->
+    <!-- ▶ Scrap-Button -->
     <button class="scrap-btn" id="scrapBtn" type="button">
       <span id="scrapBtnLabel">▶ Wien scrap</span>
     </button>
@@ -601,7 +552,7 @@
 
   <div class="grid">
 
-    <!-- BEWERTUNG -->
+    <!-- BEWERTUNG (links, unverändert) -->
     <section class="card" id="bewertungCard">
       <h2>Neue <em>Bewertung</em></h2>
       <div class="card-sub" id="bewertungSub">Status pro Kategorie auswählen</div>
@@ -614,13 +565,22 @@
       </div>
     </section>
 
-    <!-- STATS -->
-    <section class="card" id="statsCard">
-      <h2>Übersicht & <em>Statistik</em></h2>
-      <div class="card-sub" id="statsSub">Alle Mitarbeiter</div>
+    <!-- SHEET-EMBED (NEU, ersetzt Statistik) -->
+    <section class="card" id="sheetCard">
+      <div class="sheet-card-head">
+        <div>
+          <h2>KPI <em>Übersicht</em></h2>
+          <div class="card-sub" id="sheetSub">Live-Auswertung · Wien</div>
+        </div>
+        <div class="right">
+          <button class="refresh-btn" id="sheetReload" type="button">↻ Aktualisieren</button>
+          <a class="sheet-link" id="sheetOpenLink" href="#" target="_blank" rel="noopener">In neuem Tab ↗</a>
+        </div>
+      </div>
 
-      <div id="statsBody">
-        <div class="empty"><span class="loading"></span>Lade Statistik…</div>
+      <div class="sheet-frame-wrap" id="sheetFrameWrap">
+        <div class="sheet-loading"><span class="loading"></span>Sheet wird geladen…</div>
+        <iframe id="sheetFrame" src="" loading="lazy" referrerpolicy="no-referrer"></iframe>
       </div>
     </section>
 
@@ -633,11 +593,16 @@
 // ════════════════════════════════════════════════════════════════════
 const APP_URL_WIEN    = "https://script.google.com/macros/s/AKfycbyZeLOVDukgc1cTyuSVCFBRfarU_4Of3deJq2RC00R_d9MUQmCabIfADyxg3B3fFHfn/exec";
 const APP_URL_ZUERICH = "https://script.google.com/macros/s/AKfycbwxvnJVwFKQXC-OEBNPo8CbpXfhAbPrIo5Ezh8jh0dpJMCs-fduVoGFPvLT3P3OxnAK/exec";
+
+// Veröffentlichte Google-Sheet-Seiten (publish to web).
+// Falls Zürich später ein eigenes Sheet hat: einfach die URL austauschen.
+const SHEET_URL_WIEN    = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR8HGuzxt3e9gH4afjmSHFZdYlMSTVMLtfsQg_kk3sqrsWEFKG1icJMvpIx_hy8iD9QZ2e0xJs8hli6/pubhtml?gid=1306796045&single=true&widget=true&headers=false";
+const SHEET_URL_ZUERICH = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR8HGuzxt3e9gH4afjmSHFZdYlMSTVMLtfsQg_kk3sqrsWEFKG1icJMvpIx_hy8iD9QZ2e0xJs8hli6/pubhtml?gid=1306796045&single=true&widget=true&headers=false";
 // ════════════════════════════════════════════════════════════════════
 
 const LOCATIONS = {
-  wien:    { label: 'Wien',    url: APP_URL_WIEN },
-  zuerich: { label: 'Zürich',  url: APP_URL_ZUERICH }
+  wien:    { label: 'Wien',    url: APP_URL_WIEN,    sheetUrl: SHEET_URL_WIEN },
+  zuerich: { label: 'Zürich',  url: APP_URL_ZUERICH, sheetUrl: SHEET_URL_ZUERICH }
 };
 
 // Aktiver Standort wird in localStorage gemerkt
@@ -679,6 +644,32 @@ function checkConfig() {
   return true;
 }
 
+// ============ SHEET-EMBED ============
+
+function loadSheet() {
+  const wrap = document.getElementById('sheetFrameWrap');
+  const frame = document.getElementById('sheetFrame');
+  const link = document.getElementById('sheetOpenLink');
+  const sub = document.getElementById('sheetSub');
+
+  const sheetUrl = LOCATIONS[currentLocation].sheetUrl;
+  sub.textContent = 'Live-Auswertung · ' + LOCATIONS[currentLocation].label;
+
+  wrap.classList.remove('loaded');
+
+  // Cache-Buster, damit beim Reload wirklich frische Daten kommen
+  const sep = sheetUrl.includes('?') ? '&' : '?';
+  const bustedUrl = sheetUrl + sep + '_=' + Date.now();
+
+  frame.onload = function() {
+    wrap.classList.add('loaded');
+  };
+  frame.src = bustedUrl;
+
+  // Link für "In neuem Tab" zeigt die Originalversion (lesbarer, ohne widget-Parameter)
+  link.href = sheetUrl.replace('&widget=true', '').replace('?widget=true&', '?').replace('&headers=false', '');
+}
+
 // ============ STANDORT-WECHSEL ============
 
 function switchLocation(loc) {
@@ -699,24 +690,21 @@ function switchLocation(loc) {
   document.getElementById('pickerBtn').classList.remove('has-warn');
   document.getElementById('bewertungBody').innerHTML =
     '<div class="empty"><div class="emoji">←</div><p>Wähle zuerst einen Mitarbeiter aus.</p></div>';
-  document.getElementById('statsSub').textContent = 'Alle Mitarbeiter — ' + LOCATIONS[loc].label;
-  document.getElementById('statsBody').innerHTML =
-    '<div class="empty"><span class="loading"></span>Lade Statistik…</div>';
 
   // Scrap-Button Label updaten
   updateScrapButtonLabel();
 
-  // Neu laden
+  // Sheet neu laden (für anderen Standort)
+  loadSheet();
+
+  // Mitarbeiter neu laden
   if (checkConfig()) {
     loadMitarbeiter();
-    loadStats('');
   }
 }
 
 // ============ API ============
 
-// Einheitliche API: alles als POST mit text/plain — vermeidet CORS-Preflight,
-// funktioniert zuverlässig auf Desktop und Mobile (Chrome/Safari/Firefox).
 function apiCall(action, body) {
   if (!checkConfig()) return Promise.reject(new Error('APP_URL nicht gesetzt'));
   const payload = Object.assign({ action: action }, body || {});
@@ -733,7 +721,6 @@ function apiCall(action, body) {
     return r.json();
   })
   .catch(err => {
-    // Fallback: GET über Script-Tag (JSONP) — falls fetch durch Browser blockiert wird
     return apiCallJsonp(action, body);
   });
 }
@@ -807,7 +794,6 @@ function selectMitarbeiter(m) {
   btn.textContent = m.name;
   btn.classList.toggle('has-warn', !!m.verwarnung);
   renderBewertung();
-  loadStats(m.name);
 }
 
 // ============ BEWERTUNG-FORM ============
@@ -844,7 +830,6 @@ function renderBewertung() {
 
   body.innerHTML = html;
 
-  // Event handlers
   body.querySelectorAll('.item-row').forEach(row => {
     const key = row.dataset.key;
     row.querySelectorAll('.ok-btn, .nok-btn').forEach(b => {
@@ -874,11 +859,10 @@ async function submitBewertung() {
     if (!res.ok) throw new Error(res.error || 'Fehler');
     msg.textContent = '✓ Gespeichert';
     msg.className = 'submit-msg ok';
-    // Reset
     CATEGORIES.forEach(c => { currentItems[c.key] = { status: null, note: '' }; });
     renderBewertung();
-    // Reload stats
-    loadStats(selected.name);
+    // Nach dem Speichern Sheet neu laden, damit die neue Bewertung erscheint
+    setTimeout(() => loadSheet(), 1500);
     setTimeout(() => { const m = document.getElementById('submitMsg'); if (m) m.textContent = ''; }, 3500);
   } catch (err) {
     msg.textContent = '✕ ' + err.message;
@@ -906,71 +890,6 @@ async function toggleVerwarnung() {
   }
 }
 
-// ============ STATS ============
-
-async function loadStats(name) {
-  const body = document.getElementById('statsBody');
-  const sub = document.getElementById('statsSub');
-  const locLabel = LOCATIONS[currentLocation].label;
-  sub.textContent = name ? ('Detail: ' + name + ' · ' + locLabel) : ('Alle Mitarbeiter · ' + locLabel);
-  body.innerHTML = '<div class="empty"><span class="loading"></span>Lade…</div>';
-  try {
-    const data = await apiGet('stats', name ? { name: name } : {});
-    if (!data.ok) throw new Error(data.error || 'Fehler');
-    renderStats(data);
-  } catch (err) {
-    body.innerHTML = '<div class="empty"><p>Fehler: ' + escapeHtml(err.message) + '</p></div>';
-  }
-}
-
-function renderStats(data) {
-  const body = document.getElementById('statsBody');
-  let html = '<div class="overall">' +
-    '<div class="metric"><div class="num">' + (data.totalBewertungen || 0) + '</div><div class="lbl">Bewertungen</div></div>' +
-    '<div class="metric"><div class="num ok">' + (data.totalOk || 0) + '</div><div class="lbl">OK</div></div>' +
-    '<div class="metric"><div class="num nok">' + (data.totalNok || 0) + '</div><div class="lbl">NOK</div></div>' +
-  '</div>';
-
-  if (data.overall !== null && data.overall !== undefined) {
-    html += '<div style="text-align:center;margin:10px 0 22px;font-family:Fraunces,serif;font-size:14px;color:var(--ink-soft);">' +
-      'Gesamtscore: <strong style="font-size:18px;color:var(--accent);">' + data.overall + '%</strong></div>';
-  }
-
-  (data.stats || []).forEach(s => {
-    const pct = s.score === null ? 0 : s.score;
-    html += '<div class="stat-row">' +
-      '<div class="lbl">' + escapeHtml(s.label) + '</div>' +
-      '<div class="bar"><span style="width:' + pct + '%;"></span></div>' +
-      '<div class="ok-c">' + s.ok + '</div>' +
-      '<div class="nok-c">' + s.nok + '</div>' +
-    '</div>';
-  });
-
-  if ((data.recent || []).length > 0) {
-    html += '<div class="recent"><h3>Letzte Einträge</h3>';
-    data.recent.slice(0, 8).forEach(r => {
-      const when = r.datum ? new Date(r.datum).toLocaleString('de-DE', {
-        day: '2-digit', month: '2-digit', year: '2-digit',
-        hour: '2-digit', minute: '2-digit'
-      }) : '';
-      html += '<div class="recent-item">' +
-        '<div class="when">' + escapeHtml(when) + '</div>' +
-        (data.name ? '' : '<div class="who">' + escapeHtml(r.name) + '</div>') +
-        '<div class="recent-tags">' +
-          r.items.map(i =>
-            '<span class="tag ' + (i.status === 'OK' ? 'ok' : 'nok') + '">' +
-              escapeHtml(i.label) + (i.note ? ' · ' + escapeHtml(i.note) : '') +
-            '</span>'
-          ).join('') +
-        '</div>' +
-      '</div>';
-    });
-    html += '</div>';
-  }
-
-  body.innerHTML = html;
-}
-
 // ============ SCRAPER TRIGGER ============
 
 function updateScrapButtonLabel() {
@@ -983,11 +902,6 @@ function updateScrapButtonLabel() {
 async function triggerScraper() {
   const btn = document.getElementById('scrapBtn');
   const msg = document.getElementById('scrapMsg');
-
-  const locLabel = LOCATIONS[currentLocation].label;
-  if (!confirm('Scraper für "' + locLabel + '" jetzt starten?\n\nDer Vorgang läuft im Hintergrund (ca. 3–5 Minuten) und schreibt die Daten ins Google Sheet.')) {
-    return;
-  }
 
   btn.disabled = true;
   msg.className = 'scrap-msg';
@@ -1027,10 +941,8 @@ function escapeAttr(s) { return escapeHtml(s); }
 
 // ============ INIT ============
 
-// Standort-Buttons
 document.querySelectorAll('.location-switch button').forEach(btn => {
   btn.addEventListener('click', () => switchLocation(btn.dataset.loc));
-  // Init aktiven State
   btn.classList.toggle('active', btn.dataset.loc === currentLocation);
 });
 
@@ -1049,20 +961,15 @@ document.addEventListener('click', e => {
 });
 document.getElementById('refreshBtn').addEventListener('click', () => {
   loadMitarbeiter();
-  loadStats(selected ? selected.name : '');
 });
+document.getElementById('sheetReload').addEventListener('click', loadSheet);
 document.getElementById('scrapBtn').addEventListener('click', triggerScraper);
 
-// Init Scrap-Button Label
 updateScrapButtonLabel();
+loadSheet();
 
-// Start
 if (checkConfig()) {
   loadMitarbeiter();
-  loadStats('');
-} else {
-  document.getElementById('statsBody').innerHTML =
-    '<div class="empty"><p>Bitte zuerst <code>APP_URL_' + currentLocation.toUpperCase() + '</code> konfigurieren.</p></div>';
 }
 </script>
 </body>
